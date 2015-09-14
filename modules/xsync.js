@@ -6,10 +6,10 @@
 
 var XSync = {
     sync : function(){
-        console.log('sync!');
+        console.log('sync!!!');
     },
     version : function(){
-        return '1.0.0'
+        console.log('1.0.0');
     },
     help : function(){
         console.log('help');
