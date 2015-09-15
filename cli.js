@@ -4,7 +4,7 @@
  * @date: 15/9/15.
  */
 
-var xsync = require('./modules/xsync');
+var xsync = require('./src/xsync');
 var optimist = require('optimist');
 
 exports.run = function () {

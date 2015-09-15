@@ -1,8 +1,7 @@
 {
-  "name": "xsync",
+  "name": "xsync-callinpass",
   "version": "1.0.0",
-  "description": "",
-  "main": "xsync.js",
+  "description": "a simple sync util",
   "bin": {
     "xsync": "./bin/xsync"
   },
