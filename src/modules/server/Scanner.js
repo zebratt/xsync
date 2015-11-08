@@ -4,8 +4,7 @@
  * @date: 15/10/23.
  */
 
-var FILE_DELETED = 'DELETED',
-    FILE_ADDED = 'ADDED',
+var FILE_ADDED = 'ADDED',
     FILE_CHANGED = 'CHANGED',
     FILE_ORIGIN = 'ORIGIN',
     DIR_MATCHED = 'DIRMATCHED';
@@ -14,7 +13,7 @@ var TYPE_STRING = 0,
     TYPE_OBJECT = 1;
 
 var Scanner = {
-    getMatchedClient : function(client,server){
+    getMatchedFile : function(client,server){
         return this.scanClient(client,server);
     },
 
@@ -30,7 +29,7 @@ var Scanner = {
                 if(status == DIR_MATCHED){
                     client[key] = this.scanClient(client[key],server[key]);
                 }else{
-                    client[key] = FILE_ADDED;
+                    client[key] = this.setStatus(client[key],FILE_ADDED);
                 }
             }else{
                 client[key] = this.getStatus(TYPE_STRING,key,client[key],server);
@@ -67,6 +66,20 @@ var Scanner = {
         }
 
         return FILE_ADDED;
+    },
+
+    setStatus : function(obj,status){
+        for(var o in obj){
+            if(!obj.hasOwnProperty(o)) continue;
+
+            if(typeof obj[o] == 'object'){
+                this.setStatus(obj[o],status);
+            }else{
+                obj[o] = status;
+            }
+        }
+
+        return obj;
     }
 };
 

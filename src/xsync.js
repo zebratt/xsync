@@ -22,17 +22,15 @@ var XSync = {
                 logger.info('远程主机连接成功，开始上传文件...');
 
                 var MD5Data = createMD5Data('.');     //遍历当前目录，生成MD5目录映射
-                logger.info('MD5:' + JSON.stringify(MD5Data,null,4));
 
                 return client.send(MD5Data,'MD5');    //发送MD5映射列表到服务器
             }).catch(function(){
                 logger.serverErr('无法连接服务器，请检查服务器配置！');
             }).then(function(resp){
                 logger.info('改动文件响应：' + JSON.stringify(resp,null,4));
-                //var fileData = getFileData(resp.data);    //服务器返回改动文件列表，据此读取文件并创建对象
+                var fileData = getFileData(resp.data);    //服务器返回改动文件列表，据此读取文件并创建对象
 
-
-                //return client.send(fileData,'file');  //发送这些有改动的文件
+                return client.send(fileData,'CONTENT');  //发送这些有改动的文件
             }).catch(function(){
                 logger.serverErr('请求MD5改动列表失败！');
             }).then(function(){
@@ -123,10 +121,14 @@ function getFileData(modifiedDataObj){
         var result = {};
 
         for(var o in obj){
-            if(typeof obj[o] === 'object'){
+            if(!obj.hasOwnProperty(o)) continue;
+
+            if(typeof obj[o] == 'object'){
                 result[o] = recursive(obj[o]);
             }else{
-                result[o] = fs.readFileSync(o,'utf-8');
+                if(obj[o] == 'ADDED' || obj[o] == "CHANGED"){
+                    result[o] = fs.readFileSync(o,'utf-8');
+                }
             }
         }
 

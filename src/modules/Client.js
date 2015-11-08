@@ -20,7 +20,7 @@ var Client = {
                 host : config.host,
                 port : config.port,
                 data : {
-                    type : 'ping',
+                    type : 'PING',
                     data : {}
                 }
             }).then(function(){

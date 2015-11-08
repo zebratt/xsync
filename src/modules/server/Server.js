@@ -17,6 +17,7 @@ var Server = {
     init : function(config){
         var dataStr = '';
         var dataLen = 0;
+        var ending = false;
 
         logger.info('Server has started on port : ' + config.port);
 
@@ -47,17 +48,28 @@ var Server = {
                 };
 
                 switch(data.type){
-                    case 'ping' :
+                    case 'PING' :
                         dataForReturn.ret = true;
                         break;
                     case 'MD5' :
                         dataForReturn.ret = true;
                         dataForReturn.data = fetchMatchedFiles(data.data);
                         break;
+                    case 'CONTENT' :
+                        dataForReturn.ret = true;
+                        createFiles(data.data);
+
+                        logger.info('服务器端文件更新完毕!');
+
+                        ending = true;    //结束程序
                 }
 
                 var packet = createPacket(dataForReturn);
                 socket.write(packet);
+
+                if(ending){
+                    process.exit(-1);
+                }
             });
 
         }).listen(config.port,config.host);
@@ -107,8 +119,25 @@ function parse(dataStr){
  */
 function fetchMatchedFiles(client){
     var server = createMD5Data('.');
+    var fileToDelete = scanner.getMatchedFile(server,client);
 
-    return scanner.getMatchedClient(client,server);
+    function recuDelete(deleteFile){
+        for(var file in deleteFile){
+            if(!deleteFile.hasOwnProperty(file)) continue;
+
+            if(typeof deleteFile[file] == 'object'){
+                recuDelete(deleteFile[file]);
+            }else{
+                if(deleteFile[file] == 'ADDED'){
+                    logger.info('文件被删除：' + file);
+                    fs.unlinkSync(file);
+                }
+            }
+        }
+    }
+    recuDelete(fileToDelete);
+
+    return scanner.getMatchedFile(client,server);
 }
 
 /**
@@ -155,3 +184,49 @@ function generateFileMD5(filePath){
 }
 
 module.exports = Server;
+
+/**
+ * 创建新的文件
+ * @param files 新的文件
+ */
+function createFiles(files){
+    var filePath;
+
+    for(filePath in files){
+        if(!files.hasOwnProperty(filePath)) continue;
+
+        if(typeof files[filePath] == 'object'){
+            createFiles(files[filePath]);
+        }else{
+            mkdirAndWriteFile(filePath,files[filePath]);
+        }
+
+        logger.info(path.basename(filePath) + '....更新成功！');
+    }
+}
+
+/**
+ * 根据传入的路径递归创建文件夹，并创建文件
+ * @param filePath 路径
+ * @param content 文件内容
+ */
+function mkdirAndWriteFile(filePath,content){
+    var dirPath = path.dirname(filePath);
+    var dirStack = [];
+
+    while(!fs.existsSync(dirPath) && dirPath != '.'){
+        dirStack.push(path.basename(dirPath));
+        dirPath = path.dirname(dirPath);
+    }
+
+    while(dirStack.length > 0){
+        dirPath = path.join(dirPath,dirStack.pop());
+        fs.mkdirSync(dirPath);
+    }
+
+    fs.writeFileSync(filePath,content);
+}
+
+
+
+
